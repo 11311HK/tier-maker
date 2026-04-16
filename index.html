@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대학생 필수 어플 티어 리스트</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    
+    <style>
+        /* 1. 전체 초기화 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            padding: 40px 20px;
+            background-color: #f4f4f5;
+        }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #333; }
+        p { color: #666; font-size: 1.1rem; }
+
+        /* [실습 1] 메인 레이아웃 (보드와 사이드 패널 가로 배치) */
+        .layout-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* 2. 티어 리스트 보드 (좌측 넓은 영역) */
+        .tier-board {
+            background: #1e1e1e;
+            border-radius: 12px;
+            border: 2px solid #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        /* 3. 사이드 패널 (우측 미리보기 및 대기소 영역) */
+        .side-panel {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* [실습 2] 티어 행 내부 배치 */
+        .tier-row {
+            border-bottom: 2px solid #333;
+            min-height: 120px;
+            display: flex;
+        }
+        .tier-row:last-child { border-bottom: none; }
+
+        /* 티어 라벨 (좌측 등급 표시) */
+        .tier-label {
+            width: 120px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            text-align: center;
+            line-height: 1.3;
+            padding: 5px;
+        }
+        .rank-s { background-color: #ff7f7f; }
+        .rank-a { background-color: #ffbf7f; }
+        .rank-b { background-color: #ffff7f; }
+        .rank-c { background-color: #7fff7f; }
+        .rank-d { background-color: #7fbfff; }
+
+        /* [실습 3] 드롭 영역 및 아이템 정렬 */
+        .tier-items, .item-pool {
+            padding: 15px;
+            gap: 10px;
+        }
+        .tier-items {
+            background-color: #2b2b2b;
+            display: flex;
+            flex-wrap: wrap;
+            flex-grow: 1;
+            align-content: flex-start;
+            align-items: flex-start;
+        }
+
+        /* 아이템 대기소 */
+        .item-pool {
+            background-color: #e5e7eb;
+            border-radius: 12px;
+            min-height: 200px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            align-items: flex-start;
+        }
+
+        /* 미리보기 창 디자인 */
+        .preview-box {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-box img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .preview-box p { font-weight: bold; font-size: 1.2rem; color: #333; }
+        .preview-placeholder { color: #9ca3af; font-size: 0.9rem; }
+
+        /* 개별 아이템 디자인 */
+        .item {
+            width: 80px; height: 80px;
+            cursor: grab; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
+            transition: transform 0.2s;
+        }
+        .item:hover { transform: scale(1.05); border: 2px solid #3b82f6; }
+        .item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .item .item-name {
+            position: absolute; bottom: 0; width: 100%;
+            background: rgba(0,0,0,0.7); color: white;
+            font-size: 0.7rem; text-align: center; padding: 4px 0; pointer-events: none;
+        }
+
+        /* 드래그 중 시각 피드백 */
+        .tier-items.drag-over {
+            background-color: #3a3a4a;
+            outline: 2px dashed #3b82f6;
+        }
+        .item-pool.drag-over {
+            background-color: #d1d5db;
+            outline: 2px dashed #3b82f6;
+        }
+
+        /* 4. 반응형 레이아웃 (Media Query) */
+        @media (max-width: 800px) {
+            .side-panel { width: 100%; }
+            .tier-row { 
+                flex-direction: column;
+            }
+            .tier-label { width: 100%; height: 50px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📱 대학생 필수 어플 티어 리스트</h1>
+        <p>우리 조원들이 직접 선정한 대학생 필수 어플 12개를 평가합니다.</p>
+    </header>
+
+    <div class="layout-wrapper">
+        <main class="tier-board">
+            <div class="tier-row">
+                <div class="tier-label rank-s">🐐<br>GOAT</div>
+                <div class="tier-items"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-label rank-a">✊<br>인권</div>
+                <div class="tier-items"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-label rank-b">😤<br>없으면<br>꼬움</div>
+                <div class="tier-items"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-label rank-c">🔄<br>2군</div>
+                <div class="tier-items"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-label rank-d">🗑️<br>용량 낭비</div>
+                <div class="tier-items"></div>
+            </div>
+        </main>
+
+        <aside class="side-panel">
+            <div class="preview-box" id="previewBox">
+                <p class="preview-placeholder">아이템에 마우스를 올리면<br>상세 정보가 표시됩니다.</p>
+            </div>
+
+            <h2 style="font-size: 1.2rem; margin-bottom: 10px; color: #333;">📌 아이템 대기열</h2>
+            <div class="item-pool" id="pool">
+
+                <!-- 팀원 아이템 시작 -->
+                <div class="item" draggable="true" id="item_kimhan_1">
+                    <img src="https://th.bing.com/th/id/OIP.ngEmo8dUZaEOv3OH8o4siAHaHa?w=175&h=180&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3" alt="에타">
+                    <div class="item-name">에타</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_2">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%8B%B0%EC%96%B4%EA%B2%8C%EC%9E%84ash/%EC%9C%A0%ED%8A%9C%EB%B8%8C.png?raw=true" alt="유튜브">
+                    <div class="item-name">유튜브</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_3">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%EB%85%B8%EC%85%98.png?raw=true" alt="노션">
+                    <div class="item-name">노션</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_4">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%81%B4%EB%A1%9C%EB%93%9C.png?raw=true" alt="클로드">
+                    <div class="item-name">클로드</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_5">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%8B%B0%EC%96%B4%EA%B2%8C%EC%9E%84ash/%ED%8C%8C%ED%8C%8C%EA%B3%A0.png?raw=true" alt="파파고">
+                    <div class="item-name">파파고</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_6">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/discord.png?raw=true" alt="디스코드">
+                    <div class="item-name">디스코드</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_7">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%81%B4%EB%A1%9C%EB%B2%84%EB%85%B8%ED%8A%B8.png?raw=true" alt="클로버노트">
+                    <div class="item-name">클로버노트</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_8">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%8B%B0%EC%96%B4%EA%B2%8C%EC%9E%84ash/%EC%A0%9C%EB%AF%B8%EB%82%98%EC%9D%B4.png?raw=true" alt="제미나이">
+                    <div class="item-name">제미나이</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_9">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/%EC%9D%B8%EC%8A%A4%ED%83%80.png?raw=true" alt="인스타">
+                    <div class="item-name">인스타</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_10">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%EB%A7%81%EC%BB%A4%EB%A6%AC%EC%96%B4.png?raw=true" alt="링커리어">
+                    <div class="item-name">링커리어</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_11">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%ED%83%80%EC%9E%84%EB%B8%94%EB%A1%9D.jpg?raw=true" alt="타임블록">
+                    <div class="item-name">타임블록</div>
+                </div>
+
+                <div class="item" draggable="true" id="item_kimhan_12">
+                    <img src="https://github.com/11311HK/tier-maker/blob/main/images/%EB%8B%A4%EA%B8%80%EB%A1%9C.png?raw=true" alt="다글로">
+                    <div class="item-name">다글로</div>
+                </div>
+                <!-- 팀원 아이템 끝 -->
+
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        let draggedItem = null;
+
+        document.querySelectorAll('.item').forEach(function(item) {
+            item.addEventListener('dragstart', function(ev) {
+                draggedItem = this;
+                ev.dataTransfer.setData('text/plain', this.id);
+                this.style.opacity = '0.5';
+            });
+
+            item.addEventListener('dragend', function() {
+                this.style.opacity = '1';
+                document.querySelectorAll('.drag-over').forEach(function(el) {
+                    el.classList.remove('drag-over');
+                });
+            });
+
+            item.addEventListener('mouseenter', function() {
+                showPreview(this);
+            });
+        });
+
+        document.querySelectorAll('.tier-items, .item-pool').forEach(function(zone) {
+            zone.addEventListener('dragover', function(ev) {
+                ev.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', function() {
+                this.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', function(ev) {
+                ev.preventDefault();
+                this.classList.remove('drag-over');
+                if (draggedItem) {
+                    this.appendChild(draggedItem);
+                    draggedItem = null;
+                }
+            });
+        });
+
+        function showPreview(element) {
+            var imgSrc = element.querySelector('img').src;
+            var itemName = element.querySelector('.item-name').innerText;
+            var preview = document.getElementById('previewBox');
+            preview.innerHTML = '<img src="' + imgSrc + '" alt="미리보기 이미지"><p>' + itemName + '</p>';
+        }
+    </script>
+</body>
+</html>
